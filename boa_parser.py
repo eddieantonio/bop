@@ -134,8 +134,8 @@ class Parser(object):
         r"""
         >>> Parser().result is None
         True
-        >>> type(Parser().detect_format('counts[] = Herp').result)
-        <type 'list'>
+        >>> isinstance(Parser().detect_format('counts[] = Herp').result, list)
+        True
         >>> isinstance(Parser(weighted=True).detect_format('counts[] = Herp, 1').result, dict)
         True
         """
@@ -159,7 +159,6 @@ class Parser(object):
         """
         left, right = line.split('=')
         assert left[-1] == ' ' and right[0] == ' '
-        # The most naïve parsing ever.
         return left[:-1], right[1:]
 
     def parse(self, iterator):
@@ -229,4 +228,5 @@ if __name__ == '__main__':
     with open(filename) as f:
         results = parse(f, weighted)
 
-    print(json.dumps(results, indent=4, separators=(', ', ': ')))
+    sys.stdout.write(json.dumps(results, indent=4, separators=(', ', ': ')))
+    sys.stdout.write('\n')
