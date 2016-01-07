@@ -1,0 +1,7 @@
+language: python
+script: py.test --doctest-mod
+python:
+- '2.7'
+- '3.3'
+- '3.5'
+- pypy
