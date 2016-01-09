@@ -1,5 +1,5 @@
 language: python
-script: py.test --doctest-mod
+script: py.test bop
 python:
 - '2.7'
 - '3.3'

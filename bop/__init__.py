@@ -23,6 +23,7 @@ import re
 from collections import defaultdict
 
 __all__ = ['parse']
+__version__ = '0.1.0'
 
 KEY_PATTERN = re.compile(r"""
     \[
@@ -194,8 +195,8 @@ def parse(string_iter, weighted=False):
         licenses[] = GNU General Public License version 2.0 (GPLv2), 78
 
     You must explicitly set ``weighted=True`` to parse this kind of data.
-    Weighted data is always returned as a dictionary, with the "identifier" as
-    the keys, and the weight as the values.
+    Weighted data is always returned as a dictionary, with the "identifier"
+    as the keys, and the weight as the values.
 
     >>> parse(["licenses[] = GNU General Public License version 2.0 (GPLv2)\n"])
     ['GNU General Public License version 2.0 (GPLv2)']
@@ -208,7 +209,8 @@ def parse(string_iter, weighted=False):
     parser.parse(string_iter)
     return dedefaultdictize(parser.result)
 
-if __name__ == '__main__':
+
+def main():
     import sys
     import json
 
@@ -216,7 +218,8 @@ if __name__ == '__main__':
     args = sys.argv[:]
 
     if len(args) < 2:
-        sys.stderr.write("Usage:   boa_parser [--weighted] output.txt\n")
+        sys.stderr.write("Usage:   bop [--weighted] output.txt\n")
+        sys.exit(-1)
 
     weighted = False
     if '--weighted' in args:
@@ -230,3 +233,6 @@ if __name__ == '__main__':
 
     sys.stdout.write(json.dumps(results, indent=4, separators=(', ', ': ')))
     sys.stdout.write('\n')
+
+if __name__ == '__main__':
+    main()

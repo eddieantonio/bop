@@ -1,2 +1,7 @@
+# Python caches
 *.pyc
 __pycache__/
+
+# Setuptools stuff.
+/*.egg-info
+/dist/
