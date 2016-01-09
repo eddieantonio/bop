@@ -2,8 +2,8 @@
 Boa Output Parser
 ==================
 
-.. image:: https://travis-ci.org/eddieantonio/boa_parser.svg?branch=master
-    :target: https://travis-ci.org/eddieantonio/boa_parser
+.. image:: https://travis-ci.org/eddieantonio/bop.svg?branch=master
+    :target: https://travis-ci.org/eddieantonio/bop
 
 Parses output from Boa_ in Python! :thumbsup:
 
