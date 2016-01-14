@@ -61,23 +61,6 @@ class Parser(object):
         return self._container
 
     def add_result(self, *args):
-        """
-        >>> p = Parser()
-        >>> p._container = []
-        >>> p.add_result('', 'bar').result
-        ['bar']
-        >>> p.add_result('', 'baz').result
-        ['bar', 'baz']
-
-        >>> p = Parser(weighted=True)
-        >>> p._container = {}
-        >>> p.add_result('foo', '12').result
-        {'foo': '12'}
-
-        >>> p = Parser().detect_format('foo[bar][baz] = quux')
-        >>> p.add_result('bar', 'baz', 'quux').result['bar']['baz']
-        'quux'
-        """
         assert len(args) >= 2
         keys, value = args[:-1], args[-1]
 
@@ -93,10 +76,6 @@ class Parser(object):
         return self
 
     def parse_weight(self, string):
-        """
-        >>> Parser().parse_weight('GNU General Public License version 2.0 (GPLv2), 78')
-        ('GNU General Public License version 2.0 (GPLv2)', '78')
-        """
         assert not string.endswith('\n')
         match = WEIGHT_PATTERN.search(string)
         assert match
@@ -106,8 +85,6 @@ class Parser(object):
         """
         >>> Parser().parse_line('foo[] = bar').result
         ['bar']
-        >>> Parser(weighted=True).parse_line('foo[] = bar, 2').result['bar']
-        '2'
         """
         line = raw_line.rstrip('\n')
         if not self._container:
@@ -148,7 +125,8 @@ class Parser(object):
         RuntimeError: Container type not yet determined ...
         >>> isinstance(Parser().detect_format('counts[] = Herp').result, list)
         True
-        >>> isinstance(Parser(weighted=True).detect_format('counts[] = Herp, 1').result, dict)
+        >>> parser = Parser(weighted=True).detect_format('counts[] = Herp, 1')
+        >>> isinstance(parser.result, dict)
         True
         """
         keys_string, _ = self.cleave(line)
@@ -164,11 +142,8 @@ class Parser(object):
 
         return self
 
-    def cleave(self, line):
-        """
-        >>> Parser().cleave('licenses[] = GNU General Public License version 2.0 (GPLv2)')
-        ('licenses[]', 'GNU General Public License version 2.0 (GPLv2)')
-        """
+    @staticmethod
+    def cleave(line):
         left, right = line.split('=')
         assert left[-1] == ' ' and right[0] == ' '
         return left[:-1], right[1:]
@@ -215,12 +190,6 @@ def parse(string_iter, weighted=False):
     :return: parsed Boa output
     :rtype: :py:class:`dict` or :py:class:`list`
 
-    >>> parse(["licenses[] = GNU General Public License version 2.0 (GPLv2)\n"])
-    ['GNU General Public License version 2.0 (GPLv2)']
-    >>> parse(["counts[] = GNU General Public License version 2.0 (GPLv2), 78\n"], True)
-    {'GNU General Public License version 2.0 (GPLv2)': '78'}
-    >>> parse(["Varargs[http://sourceforge.net/projects/baggielayout][/baggieLayout/trunk/src/org/peterMaloney/swing/baggieLayout/XmlTable.java][1161048214105000] = 1\n"])
-    {'http://sourceforge.net/projects/baggielayout': {'/baggieLayout/trunk/src/org/peterMaloney/swing/baggieLayout/XmlTable.java': {'1161048214105000': '1'}}}
     """
     parser = Parser(weighted)
     parser.parse(string_iter)
