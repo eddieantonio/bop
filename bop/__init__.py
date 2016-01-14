@@ -20,7 +20,9 @@ bop - parses results from Boa's less than helpful text output
 """
 
 import re
+
 from collections import defaultdict
+from itertools import takewhile
 
 __all__ = ['parse']
 __version__ = '0.1.0'
@@ -49,8 +51,8 @@ class Parser(object):
     """
     def __init__(self, weighted=False):
         self.weighted = weighted
-        self.line = ''
-        self.value = ''
+        self.buffer = []
+        self.new_value_pattern = None
         self._container = None
 
     @property
@@ -58,7 +60,13 @@ class Parser(object):
         if self._container is None:
             raise RuntimeError('Container type not yet determined '
                                '(parse at least one line of input)')
-        return self._container
+        self.finalize()
+        return dedefaultdictize(self._container)
+
+    @property
+    def initialized(self):
+        return (self._container is not None and
+                self.new_value_pattern is not None)
 
     def add_result(self, *args):
         assert len(args) >= 2
@@ -75,11 +83,67 @@ class Parser(object):
 
         return self
 
-    def parse_weight(self, string):
+    @staticmethod
+    def parse_weight(string):
         assert not string.endswith('\n')
         match = WEIGHT_PATTERN.search(string)
         assert match
         return match.group(1, 2)
+
+    def ingest(self, text):
+        """
+        Ingest arbitrary text and add it to the buffer
+        """
+
+        # Just adding text with out a new line to the buffer.
+        if len(self.buffer) > 0 and '\n' not in text:
+            self.buffer[-1] += text
+            return
+
+        if not self.initialized:
+            self.detect_format(text)
+
+        if text == '\n':
+            self.buffer += ''
+            return self
+
+        portions = text.split('\n')
+        this_line, next_line = self.segregate(portions)
+
+        while len(next_line) > 0:
+            if len(this_line) == 0:
+                self.finalize()
+                this_line, next_line = next_line, None
+                break
+            else:
+                self.buffer += this_line
+                self.finalize()
+            this_line, next_line = self.segregate(next_line)
+
+        self.buffer += this_line
+        return self
+
+    def finalize(self):
+        if not len(self.buffer):
+            return
+        self.parse_line('\n'.join(self.buffer))
+        self.buffer = []
+
+    def segregate(self, portions):
+        """
+        Returns lists of this line and the rest of the lines.
+
+        >>> parser = Parser().detect_format('var[] = herp')
+        >>> parser.segregate(['herp', '', 'derp', 'var[] = herp'])
+        (['herp', '', 'derp'], ['var[] = herp'])
+        >>> parser.segregate(['var[] = herp'])
+        ([], ['var[] = herp'])
+        """
+        def is_not_line_start(p):
+            return not self.new_value_pattern.match(p)
+        this_line = list(takewhile(is_not_line_start, portions))
+        rest = portions[len(this_line):]
+        return this_line, rest
 
     def parse_line(self, raw_line):
         """
@@ -87,11 +151,11 @@ class Parser(object):
         ['bar']
         """
         line = raw_line.rstrip('\n')
-        if not self._container:
+        if not self.initialized:
             self.detect_format(line)
 
         keys_string, value = self.cleave(line)
-        keys = self.parse_keys(keys_string)
+        _, keys = self.parse_keys(keys_string)
         assert len(keys) > 0
 
         # Remove the "dummy" empty key for lists and weighted results.
@@ -105,17 +169,18 @@ class Parser(object):
             self.add_result(*(keys + [value]))
         return self
 
-    def parse_keys(self, keys_string):
+    @staticmethod
+    def parse_keys(keys_string):
         """
         >>> Parser().parse_keys('counts[foo][bar]')
-        ['foo', 'bar']
+        ('counts', ['foo', 'bar'])
         >>> Parser().parse_keys('counts[]')
-        ['']
+        ('counts', [''])
         """
         parsed = KEY_PATTERN.split(keys_string)
         assert len(parsed) > 1
         # Results are in every SECOND item.
-        return parsed[1::2]
+        return parsed[0], parsed[1::2]
 
     def detect_format(self, line):
         r"""
@@ -123,14 +188,20 @@ class Parser(object):
         Traceback (most recent call last):
             ...
         RuntimeError: Container type not yet determined ...
-        >>> isinstance(Parser().detect_format('counts[] = Herp').result, list)
+        >>> parser = Parser().detect_format('counts[] = Herp')
+        >>> isinstance(parser.result, list)
         True
+        >>> parser.new_value_pattern.pattern
+        '^counts\\['
         >>> parser = Parser(weighted=True).detect_format('counts[] = Herp, 1')
         >>> isinstance(parser.result, dict)
         True
         """
         keys_string, _ = self.cleave(line)
-        keys = self.parse_keys(keys_string)
+        varname, keys = self.parse_keys(keys_string)
+
+        # Create a regex from the varname
+        self.new_value_pattern = re.compile('^' + re.escape(varname) + '\[')
 
         if not self.weighted and keys[0] == '':
             # It's a simple list.
@@ -144,13 +215,13 @@ class Parser(object):
 
     @staticmethod
     def cleave(line):
-        left, right = line.split('=')
+        left, right = line.split('=', 1)
         assert left[-1] == ' ' and right[0] == ' '
         return left[:-1], right[1:]
 
     def parse(self, iterator):
         for line in iterator:
-            self.parse_line(line)
+            self.ingest(line)
         assert self._container is not None
 
 
@@ -193,7 +264,7 @@ def parse(string_iter, weighted=False):
     """
     parser = Parser(weighted)
     parser.parse(string_iter)
-    return dedefaultdictize(parser.result)
+    return parser.result
 
 
 def main():

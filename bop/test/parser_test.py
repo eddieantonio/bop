@@ -15,13 +15,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .. import Parser, dedefaultdictize, parse
+from .. import Parser, parse
 
 # Test inputs
 GNU_LINE = 'licenses[] = GNU General Public License version 2.0 (GPLv2)\n'
 GNU_LINE_WITH_WEIGHT = "counts[] = GNU General Public License version 2.0 (GPLv2), 78\n"
 GNU_VALUE_WITH_WEIGHT = 'GNU General Public License version 2.0 (GPLv2), 78'
 LINE_WITH_NESTED_VALUE = 'Varargs[http://sourceforge.net/projects/baggielayout][/baggieLayout/trunk/src/org/peterMaloney/swing/baggieLayout/XmlTable.java][1161048214105000] = 1\n'
+LINE_WITH_SINGLE_LINE_VALUE = 'Commits[eddiantonio/bop][sha1] = herp\n'
+LINE_WITH_MULTILINE_VALUE = ('Commits[eddieantonio/bop][sha2] = I herped\n\n'
+                             'I derped\n\n'
+                             'I conquered\n')
+INPUT_WITH_MULTILINE_VALUES = """
+some_var[] = single line value
+some_var[] = multi
+line
+
+
+value
+some_var[] = last value
+""".lstrip()
+
+
+def yield_lines(string):
+    for line in string.split('\n'):
+        yield line + '\n'
 
 
 def test_add_result():
@@ -39,7 +57,7 @@ def test_add_result():
 
 def test_add_results_after_detect_format():
     p = Parser().detect_format('foo[bar][baz] = quux')
-    result = dedefaultdictize(p.add_result('bar', 'baz', 'quux').result)
+    result = p.add_result('bar', 'baz', 'quux').result
     assert {'bar': {'baz': 'quux'}} == result
 
 
@@ -49,12 +67,29 @@ def test_parse_weight():
 
 
 def test_parse_line():
+    # Test parsing a single weighted line
     result = Parser(weighted=True).parse_line('foo[] = bar, 2').result
     assert {'bar': '2'}
 
+def test_parse_multiline_values():
+    parser = Parser()
+    for line in yield_lines(LINE_WITH_MULTILINE_VALUE):
+        parser.ingest(line)
+    expected = {'eddieantonio/bop': {'sha2': 'I herped\n\nI derped\n\nI conquered'}}
+    assert expected == parser.result
+
+    parser = Parser()
+    for line in yield_lines(LINE_WITH_MULTILINE_VALUE):
+        parser.ingest(line)
+    parser.ingest(LINE_WITH_SINGLE_LINE_VALUE)
+    expected = {
+        'eddieantonio/bop': {
+            'sha1': 'I herped\n\nI derped\n\nI conquered',
+            'sha2': 'herp',
+        }
+    }
 
 def test_cleave():
-
     result = Parser.cleave(GNU_LINE.rstrip())
     expected = 'licenses[]', 'GNU General Public License version 2.0 (GPLv2)'
     assert expected == result
@@ -80,3 +115,9 @@ def test_parse():
         }
     }
     assert expected == result
+
+
+def test_parse_with_multiline_values():
+    actual = parse(yield_lines(INPUT_WITH_MULTILINE_VALUES))
+    expected = ['single line value', 'multi\n\nline\n\nvalue', 'last value']
+    assert expected == actual
