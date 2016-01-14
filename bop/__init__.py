@@ -49,19 +49,28 @@ class Parser(object):
     """
     def __init__(self, weighted=False):
         self.weighted = weighted
-        self.result = None
+        self.line = ''
+        self.value = ''
+        self._container = None
+
+    @property
+    def result(self):
+        if self._container is None:
+            raise RuntimeError('Container type not yet determined '
+                               '(parse at least one line of input)')
+        return self._container
 
     def add_result(self, *args):
         """
         >>> p = Parser()
-        >>> p.result = []
+        >>> p._container = []
         >>> p.add_result('', 'bar').result
         ['bar']
         >>> p.add_result('', 'baz').result
         ['bar', 'baz']
 
         >>> p = Parser(weighted=True)
-        >>> p.result = {}
+        >>> p._container = {}
         >>> p.add_result('foo', '12').result
         {'foo': '12'}
 
@@ -72,11 +81,11 @@ class Parser(object):
         assert len(args) >= 2
         keys, value = args[:-1], args[-1]
 
-        if isinstance(self.result, list):
-            self.result.append(value)
+        if isinstance(self._container, list):
+            self._container.append(value)
             return self
 
-        current_dict = self.result
+        current_dict = self._container
         for key in keys[:-1]:
             current_dict = current_dict[key]
         current_dict[keys[-1]] = value
@@ -101,7 +110,7 @@ class Parser(object):
         '2'
         """
         line = raw_line.rstrip('\n')
-        if not self.result:
+        if not self._container:
             self.detect_format(line)
 
         keys_string, value = self.cleave(line)
@@ -109,7 +118,7 @@ class Parser(object):
         assert len(keys) > 0
 
         # Remove the "dummy" empty key for lists and weighted results.
-        if isinstance(self.result, dict) and keys[-1] == '':
+        if isinstance(self._container, dict) and keys[-1] == '':
             keys.pop()
 
         if self.weighted:
@@ -133,8 +142,10 @@ class Parser(object):
 
     def detect_format(self, line):
         r"""
-        >>> Parser().result is None
-        True
+        >>> Parser().result
+        Traceback (most recent call last):
+            ...
+        RuntimeError: Container type not yet determined ...
         >>> isinstance(Parser().detect_format('counts[] = Herp').result, list)
         True
         >>> isinstance(Parser(weighted=True).detect_format('counts[] = Herp, 1').result, dict)
@@ -145,11 +156,11 @@ class Parser(object):
 
         if not self.weighted and keys[0] == '':
             # It's a simple list.
-            self.result = []
+            self._container = []
         else:
             # Create a dictionary capable of autovivification.
             vivify = lambda: defaultdict(vivify)
-            self.result = vivify()
+            self._container = vivify()
 
         return self
 
@@ -165,7 +176,7 @@ class Parser(object):
     def parse(self, iterator):
         for line in iterator:
             self.parse_line(line)
-        assert self.result is not None
+        assert self._container is not None
 
 
 def dedefaultdictize(d):
