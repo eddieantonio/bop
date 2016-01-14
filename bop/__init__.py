@@ -16,7 +16,7 @@
 # limitations under the License.
 
 """
-parses results from Boa's less than helpful text output
+bop - parses results from Boa's less than helpful text output
 """
 
 import re
@@ -184,19 +184,25 @@ def dedefaultdictize(d):
 
 def parse(string_iter, weighted=False):
     r"""
-    Given an iterator that yields lines (like a file object), returns the
+    Given an iterator that yields strings (like a file object), returns the
     parsed results. The results may be returned as a list if there are no
     discernible string keys; results are returned as a (possibly nested)
     dictionary otherwise.
 
-    If ``weighted`` is True, indicates that the values are affixed with a
-    comma-separate weight, like so:
+    If ``weighted`` is ``True``, indicates that the values are affixed with a
+    comma-separate weight, like so::
 
         licenses[] = GNU General Public License version 2.0 (GPLv2), 78
 
     You must explicitly set ``weighted=True`` to parse this kind of data.
-    Weighted data is always returned as a dictionary, with the "identifier"
-    as the keys, and the weight as the values.
+    Weighted data is always returned as a dictionary, with the "identifier" as
+    the keys, and the weight as the values.
+
+    :param string_iter: A string or an iterator that yields strings, such as
+                        a :any:`file` object.
+    :param bool weighted: Whether the output consists of weights.
+    :return: parsed Boa output
+    :rtype: :py:class:`dict` or :py:class:`list`
 
     >>> parse(["licenses[] = GNU General Public License version 2.0 (GPLv2)\n"])
     ['GNU General Public License version 2.0 (GPLv2)']
