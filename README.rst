@@ -2,7 +2,7 @@
 Boa Output Parser
 *****************
 
-|travis_ci|
+|pypi| |license| |docs| |travis_ci|
 
 Parses output from Boa_ in Python! :thumbsup:
 
@@ -46,13 +46,26 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-  <http://www.apache.org/licenses/LICENSE-2.0>
+|  <http://www.apache.org/licenses/LICENSE-2.0>
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+
+.. |pypi| image:: https://img.shields.io/pypi/v/bop.svg?style=flat-square
+    :target: https://pypi.python.org/pypi/bop
+    :alt: Latest stable version number on Pypi
+
+.. |docs| image:: https://img.shields.io/badge/docs-stable-blue.svg?style=flat-square
+    :target: http://b-bop.readthedocs.org/en/stable/
+    :alt: Read the docs
+
+.. |license| image:: https://img.shields.io/pypi/l/bop.svg?style=flat-square
+    :target: http://www.apache.org/licenses/LICENSE-2.0
+    :alt: Apache Licensed
 
 .. |travis_ci| image:: https://img.shields.io/travis/eddieantonio/bop/master.svg?style=flat-square
     :target: http://travis-ci.org/eddieantonio/bop
