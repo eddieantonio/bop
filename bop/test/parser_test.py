@@ -19,14 +19,17 @@ from .. import Parser, parse
 
 # Test inputs
 GNU_LINE = 'licenses[] = GNU General Public License version 2.0 (GPLv2)\n'
-GNU_LINE_WITH_WEIGHT = "counts[] = GNU General Public License version 2.0 (GPLv2), 78\n"
+GNU_LINE_WITH_WEIGHT = ('counts[] = GNU General Public License version 2.0 '
+                       '(GPLv2), 78\n')
 GNU_VALUE_WITH_WEIGHT = 'GNU General Public License version 2.0 (GPLv2), 78'
-LINE_WITH_NESTED_VALUE = 'Varargs[http://sourceforge.net/projects/baggielayout][/baggieLayout/trunk/src/org/peterMaloney/swing/baggieLayout/XmlTable.java][1161048214105000] = 1\n'
+LINE_WITH_NESTED_VALUE = ('Varargs[http://sourceforge.net/projects/baggielayout]'
+                          '[/baggieLayout/trunk/src/org/peterMaloney/swing/baggieLayout/XmlTable.java]'
+                          '[1161048214105000] = 1\n')
 LINE_WITH_SINGLE_LINE_VALUE = 'Commits[eddiantonio/bop][sha1] = herp\n'
 LINE_WITH_MULTILINE_VALUE = ('Commits[eddieantonio/bop][sha2] = I herped\n\n'
                              'I derped\n\n'
                              'I conquered\n')
-INPUT_WITH_MULTILINE_VALUES = """
+INPUT_WITH_MULTILINE_VALUES = """\
 some_var[] = single line value
 some_var[] = multi
 line
@@ -34,10 +37,11 @@ line
 
 value
 some_var[] = last value
-""".lstrip()
+"""
 
 
 def yield_lines(string):
+    "Test helper. Yeilds one line at a time from a string."
     for line in string.split('\n'):
         yield line + '\n'
 
@@ -71,6 +75,7 @@ def test_parse_line():
     result = Parser(weighted=True).parse_line('foo[] = bar, 2').result
     assert {'bar': '2'}
 
+
 def test_parse_multiline_values():
     parser = Parser()
     for line in yield_lines(LINE_WITH_MULTILINE_VALUE):
@@ -88,6 +93,7 @@ def test_parse_multiline_values():
             'sha2': 'herp',
         }
     }
+
 
 def test_cleave():
     result = Parser.cleave(GNU_LINE.rstrip())
