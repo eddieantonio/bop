@@ -24,9 +24,6 @@ import re
 from itertools import takewhile
 from .utils import dedefaultdictize, vivify
 
-__all__ = ['parse']
-__version__ = u'0.2.0'
-
 KEY_PATTERN = re.compile(r"""
     \[
         (

@@ -15,12 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .. import Parser, parse
+from .. import Parser, parse, parseiter, __version__
 
 # Test inputs
 GNU_LINE = 'licenses[] = GNU General Public License version 2.0 (GPLv2)\n'
 GNU_LINE_WITH_WEIGHT = ('counts[] = GNU General Public License version 2.0 '
-                       '(GPLv2), 78\n')
+                        '(GPLv2), 78\n')
+KEY_AND_VALUE_LINE = 'file[owner/repo] = /Makefile\n'
 GNU_VALUE_WITH_WEIGHT = 'GNU General Public License version 2.0 (GPLv2), 78'
 LINE_WITH_NESTED_VALUE = ('Varargs[http://sourceforge.net/projects/baggielayout]'
                           '[/baggieLayout/trunk/src/org/peterMaloney/swing/baggieLayout/XmlTable.java]'
@@ -80,7 +81,9 @@ def test_parse_multiline_values():
     parser = Parser()
     for line in yield_lines(LINE_WITH_MULTILINE_VALUE):
         parser.ingest(line)
-    expected = {'eddieantonio/bop': {'sha2': 'I herped\n\nI derped\n\nI conquered'}}
+    expected = {
+        'eddieantonio/bop': {'sha2': 'I herped\n\nI derped\n\nI conquered'}
+    }
     assert expected == parser.result
 
     parser = Parser()
@@ -127,3 +130,42 @@ def test_parse_with_multiline_values():
     actual = parse(yield_lines(INPUT_WITH_MULTILINE_VALUES))
     expected = ['single line value', 'multi\n\nline\n\nvalue', 'last value']
     assert expected == actual
+
+
+def test_parse_options():
+    pass
+
+
+def test_parseiter_simple():
+    iterator = iter(parseiter(yield_lines(GNU_LINE)))
+    iterations = 0
+    for result in iterator:
+        iterations += 1
+
+        assert isinstance(result, tuple)
+        assert 3 == len(result)
+
+        # Access elements by name
+        assert result.keys is None
+        assert result.value == 'GNU General Public License version 2.0 (GPLv2)'
+        assert result.weight is None
+
+    assert 1 == iterations
+
+def test_parseiter_with_keys():
+    lines = yield_lines(KEY_AND_VALUE_LINE)
+    iterator = iter(parseiter(lines, weight=int))
+    iterations = 0
+    for result in iterator:
+        iterations += 1
+
+        assert isinstance(result, tuple)
+        assert 3 == len(result)
+
+        # Access elements by name
+        assert result.key == 'owner/repo'
+        assert result.keys == ('owner/repo',)
+        assert result.value == '/Makefile'
+        assert result.weight is None
+
+    assert 1 == iterations
