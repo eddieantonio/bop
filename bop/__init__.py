@@ -76,11 +76,12 @@ def parseiter(lines, schema=None, weight=None, values=None,
     :param type values:     If provided, specifies the type of the values.
                             Assumed to be strings by default. Actually, this
                             can be any callable.
-    :param string on_error: What to do when parsing encounters an error of
-                            some sort. ``'raise'`` throws the exception, as
-                            is; ``'ignore'`` silently discards the value.
-                            ``'quarantine`'' returns the offending line(s) as
-                            a string.
+    :param string on_error: If provided, specifies what to do when parsing
+                            encounters an error of some sort. ``'raise'`` (the
+                            default) throws the exception, as is. ``'ignore'``
+                            silently discards the value.  ``'quarantine'``
+                            returns a tuple of the exception and the offending
+                            line(s) as a string.
 
     :return: an iterator that yields one result per iteration
     """
