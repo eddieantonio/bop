@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# coding: utf-8
+# coding: UTF-8
 
 # Copyright 2016 Eddie Antonio Santos <easantos@ualberta.ca>
 #
@@ -15,17 +15,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import namedtuple
+import pytest
+
+from ..result import Result
+
+def test_access_key():
+    result = Result(keys=('key',),
+                    value='value',
+                    weight=None)
+    assert result.key == 'key'
+
+def test_access_key_when_none():
+    result = Result(keys=None,
+                    value='value',
+                    weight=None)
+    with pytest.raises(AttributeError):
+        result.key
 
 
-class Result(namedtuple('Result', 'keys value weight')):
-    __slots__ = ()
-
-    @property
-    def key(self):
-        try:
-            assert len(self.keys) == 1
-            return self.keys[0]
-        except (AssertionError, TypeError):
-            raise AttributeError("Can only get `key` when there is exactly "
-                                 "one key available")
+def test_access_key_when_multiple():
+    result = Result(keys=('var1', 'var2'),
+                    value='value',
+                    weight=None)
+    with pytest.raises(AttributeError):
+        result.key
